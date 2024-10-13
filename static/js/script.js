@@ -36,12 +36,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 displayResult(data.data, data.errors);
             } else {
-                displayError(data.error);
+                displayError(data.error, data.errors);
             }
         })
         .catch(error => {
             showLoading(false);
-            displayError('An error occurred while fetching the sequences.');
+            displayError('An error occurred while fetching the sequences.', [error.message]);
         });
     }
 
@@ -81,25 +81,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         if (errors && errors.length > 0) {
-            const errorList = document.createElement('ul');
-            errorList.className = 'list-group mb-3';
-            errors.forEach(error => {
-                const errorItem = document.createElement('li');
-                errorItem.className = 'list-group-item list-group-item-danger';
-                errorItem.textContent = error;
-                errorList.appendChild(errorItem);
-            });
-            sequenceDataDiv.appendChild(errorList);
+            displayErrorList(errors);
         }
 
         resultDiv.classList.remove('d-none');
         errorDiv.classList.add('d-none');
     }
 
-    function displayError(message) {
-        errorDiv.textContent = message;
+    function displayError(message, errors = []) {
+        errorDiv.innerHTML = `<p>${message}</p>`;
+        if (errors.length > 0) {
+            displayErrorList(errors);
+        }
         errorDiv.classList.remove('d-none');
         resultDiv.classList.add('d-none');
+    }
+
+    function displayErrorList(errors) {
+        const errorList = document.createElement('ul');
+        errorList.className = 'list-group mb-3';
+        errors.forEach(error => {
+            const errorItem = document.createElement('li');
+            errorItem.className = 'list-group-item list-group-item-danger';
+            errorItem.textContent = error;
+            errorList.appendChild(errorItem);
+        });
+        errorDiv.appendChild(errorList);
     }
 
     function showLoading(show) {
