@@ -14,19 +14,25 @@
             <div class="col-md-6">
                 <form id="sequenceForm">
                     <div class="mb-3">
-                        <label for="sequenceId" class="form-label">Enter RNA or DNA Sequence Identifier:</label>
-                        <input type="text" class="form-control" id="sequenceId" required>
+                        <label for="sequenceIds" class="form-label">Enter RNA or DNA Sequence Identifier(s):</label>
+                        <textarea class="form-control" id="sequenceIds" rows="3" required placeholder="Enter one or more sequence IDs, separated by commas"></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Fetch Sequence</button>
+                    <button type="submit" class="btn btn-primary">Fetch Sequence(s)</button>
                 </form>
             </div>
         </div>
         <div class="row mt-4">
             <div class="col-md-12">
+                <div id="loading" class="d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <span class="ms-2">Fetching sequences...</span>
+                </div>
                 <div id="result" class="d-none">
-                    <h3>Result:</h3>
-                    <pre id="sequenceData" class="bg-dark text-light p-3 rounded"></pre>
-                    <button id="downloadBtn" class="btn btn-success mt-2">Download Sequence</button>
+                    <h3>Results:</h3>
+                    <div id="sequenceData"></div>
+                    <button id="downloadBtn" class="btn btn-success mt-2">Download Sequences</button>
                 </div>
                 <div id="error" class="alert alert-danger d-none" role="alert"></div>
             </div>

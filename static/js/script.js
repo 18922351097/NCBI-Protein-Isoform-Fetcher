@@ -1,43 +1,76 @@
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('sequenceForm');
     const resultDiv = document.getElementById('result');
-    const sequenceDataPre = document.getElementById('sequenceData');
+    const sequenceDataDiv = document.getElementById('sequenceData');
     const errorDiv = document.getElementById('error');
     const downloadBtn = document.getElementById('downloadBtn');
+    const loadingDiv = document.getElementById('loading');
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        const sequenceId = document.getElementById('sequenceId').value;
-        fetchSequence(sequenceId);
+        const sequenceIds = document.getElementById('sequenceIds').value.trim();
+        if (validateInput(sequenceIds)) {
+            fetchSequences(sequenceIds);
+        }
     });
 
     downloadBtn.addEventListener('click', function() {
-        downloadSequence();
+        downloadSequences();
     });
 
-    function fetchSequence(sequenceId) {
+    function validateInput(input) {
+        if (input === '') {
+            displayError('Please enter at least one sequence ID.');
+            return false;
+        }
+        return true;
+    }
+
+    function fetchSequences(sequenceIds) {
+        showLoading(true);
         fetch('/fetch_sequence', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: `sequence_id=${encodeURIComponent(sequenceId)}`
+            body: `sequence_ids=${encodeURIComponent(sequenceIds)}`
         })
         .then(response => response.json())
         .then(data => {
+            showLoading(false);
             if (data.success) {
-                displayResult(data.data);
+                displayResult(data.data, data.errors);
             } else {
                 displayError(data.error);
             }
         })
         .catch(error => {
-            displayError('An error occurred while fetching the sequence.');
+            showLoading(false);
+            displayError('An error occurred while fetching the sequences.');
         });
     }
 
-    function displayResult(data) {
-        sequenceDataPre.textContent = `ID: ${data.id}\nDescription: ${data.description}\n\nSequence:\n${data.sequence}`;
+    function displayResult(sequences, errors) {
+        sequenceDataDiv.innerHTML = '';
+        sequences.forEach((sequence, index) => {
+            const sequenceElement = document.createElement('pre');
+            sequenceElement.className = 'bg-dark text-light p-3 rounded mb-3';
+            sequenceElement.textContent = `ID: ${sequence.id}\nDescription: ${sequence.description}\n\nSequence:\n${sequence.sequence}`;
+            sequenceDataDiv.appendChild(sequenceElement);
+        });
+
+        if (errors && errors.length > 0) {
+            const errorList = document.createElement('ul');
+            errorList.className = 'list-group mb-3';
+            errors.forEach(error => {
+                const errorItem = document.createElement('li');
+                errorItem.className = 'list-group-item list-group-item-danger';
+                errorItem.textContent = error;
+                errorList.appendChild(errorItem);
+            });
+            sequenceDataDiv.appendChild(errorList);
+        }
+
         resultDiv.classList.remove('d-none');
         errorDiv.classList.add('d-none');
     }
@@ -48,13 +81,23 @@ document.addEventListener('DOMContentLoaded', function() {
         resultDiv.classList.add('d-none');
     }
 
-    function downloadSequence() {
-        const sequenceData = sequenceDataPre.textContent;
+    function showLoading(show) {
+        if (show) {
+            loadingDiv.classList.remove('d-none');
+            resultDiv.classList.add('d-none');
+            errorDiv.classList.add('d-none');
+        } else {
+            loadingDiv.classList.add('d-none');
+        }
+    }
+
+    function downloadSequences() {
+        const sequenceData = sequenceDataDiv.innerText;
         const blob = new Blob([sequenceData], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'sequence.txt';
+        a.download = 'sequences.txt';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
