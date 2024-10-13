@@ -70,16 +70,29 @@ def fetch_protein_variants(gene_id):
         print(f"Found {len(protein_ids)} protein isoforms")
 
         for protein_id in protein_ids:
-            handle = Entrez.efetch(db="protein", id=protein_id, rettype="fasta", retmode="text")
-            record = SeqIO.read(handle, "fasta")
+            handle = Entrez.efetch(db="protein", id=protein_id, rettype="gb", retmode="text")
+            record = SeqIO.read(handle, "genbank")
+            
+            # Check for indicators of functionality
+            functional = False
+            if record.features:
+                for feature in record.features:
+                    if feature.type in ["CDS", "mat_peptide", "domain"]:
+                        functional = True
+                        break
+            
+            if "isoform" in record.description.lower() or "variant" in record.description.lower() or "functional" in record.description.lower():
+                functional = True
+
             variants.append({
                 'id': record.id,
                 'description': record.description,
                 'sequence': str(record.seq),
                 'size': len(record.seq),
-                'ncbi_link': f"https://www.ncbi.nlm.nih.gov/protein/{record.id}"
+                'ncbi_link': f"https://www.ncbi.nlm.nih.gov/protein/{record.id}",
+                'functional': functional
             })
-            print(f"Fetched protein isoform: {record.id}")
+            print(f"Fetched protein isoform: {record.id}, Functional: {functional}")
 
         variants.sort(key=lambda x: len(x['sequence']), reverse=True)
         if variants:
