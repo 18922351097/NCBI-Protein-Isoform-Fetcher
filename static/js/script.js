@@ -76,13 +76,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Sort variants by sequence length in descending order
+        variants.sort((a, b) => b.sequence.length - a.sequence.length);
+
         let isoformHtml = '';
 
         variants.forEach((variant, index) => {
             const functionalLabel = variant.functional ? '<span class="badge bg-success ms-2">Functional</span>' : '';
             isoformHtml += `
                 <div id="protein-isoform-${sequenceIndex}-${index}" class="protein-isoform mb-4">
-                    <h5>Isoform #${variant.index}: ${variant.id}${functionalLabel}</h5>
+                    <h5>#${index + 1}: ${variant.id}${functionalLabel}</h5>
                     <p>Description: ${variant.description}</p>
                     <p>Size: ${variant.size} aa</p>
                     <p>NCBI Link: <a href="${variant.ncbi_link}" target="_blank" class="text-info">${variant.ncbi_link}</a></p>
