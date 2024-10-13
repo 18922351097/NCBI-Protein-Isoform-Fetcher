@@ -69,7 +69,7 @@ def fetch_protein_variants(gene_id):
         protein_ids = record["IdList"]
         print(f"Found {len(protein_ids)} protein isoforms")
 
-        for protein_id in protein_ids:
+        for index, protein_id in enumerate(protein_ids, start=1):
             handle = Entrez.efetch(db="protein", id=protein_id, rettype="gb", retmode="text")
             record = SeqIO.read(handle, "genbank")
             
@@ -85,6 +85,7 @@ def fetch_protein_variants(gene_id):
                 functional = True
 
             variants.append({
+                'index': index,  # Add this line
                 'id': record.id,
                 'description': record.description,
                 'sequence': str(record.seq),
@@ -92,7 +93,7 @@ def fetch_protein_variants(gene_id):
                 'ncbi_link': f"https://www.ncbi.nlm.nih.gov/protein/{record.id}",
                 'functional': functional
             })
-            print(f"Fetched protein isoform: {record.id}, Functional: {functional}")
+            print(f"Fetched protein isoform {index}: {record.id}, Functional: {functional}")
 
         variants.sort(key=lambda x: len(x['sequence']), reverse=True)
         if variants:
@@ -144,6 +145,7 @@ def fetch_sequence():
                     'gene_name': query,
                     'gene_id': gene_id,
                     'protein_variants': protein_variants,
+                    'total_isoforms': len(protein_variants),  # Add this line
                     'ncbi_link': f"https://www.ncbi.nlm.nih.gov/gene/{gene_id}"
                 }
                 sequences.append(sequence_data)

@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sequenceElement.innerHTML = `
                 <h4>Gene: ${sequence.gene_name} (ID: ${sequence.gene_id})</h4>
                 <p>NCBI Link: <a href="${sequence.ncbi_link}" target="_blank" class="text-info">${sequence.ncbi_link}</a></p>
+                <p>Total Isoforms: ${sequence.total_isoforms}</p>
                 <div id="proteinIsoforms-${index}"></div>
             `;
             sequenceDataDiv.appendChild(sequenceElement);
@@ -81,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const functionalLabel = variant.functional ? '<span class="badge bg-success ms-2">Functional</span>' : '';
             isoformHtml += `
                 <div id="protein-isoform-${sequenceIndex}-${index}" class="protein-isoform mb-4">
-                    <h5>${variant.label}: ${variant.id}${functionalLabel}</h5>
+                    <h5>Isoform ${variant.index}: ${variant.id}${functionalLabel}</h5>
                     <p>Description: ${variant.description}</p>
                     <p>Size: ${variant.size} aa</p>
                     <p>NCBI Link: <a href="${variant.ncbi_link}" target="_blank" class="text-info">${variant.ncbi_link}</a></p>
