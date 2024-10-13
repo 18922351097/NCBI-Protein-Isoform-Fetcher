@@ -15,6 +15,40 @@ Entrez.email = "your_email@example.com"
 def index():
     return render_template('index.html')
 
+def get_sequence_id(query):
+    try:
+        print(f"Processing query: {query}")
+        # Check if the query is likely a sequence ID (e.g., starts with NM_, NR_, etc.)
+        if any(query.startswith(prefix) for prefix in ['NM_', 'NR_', 'XM_', 'XR_', 'NG_']):
+            print(f"Query appears to be a sequence ID: {query}")
+            return query
+
+        print(f"Searching for gene: {query}")
+        handle = Entrez.esearch(db="gene", term=query + "[Gene Name]", retmax=1)
+        record = Entrez.read(handle)
+        print(f"Search results: {record}")
+        if record["Count"] == "0":
+            print(f"No results found for gene: {query}")
+            return None
+        gene_id = record["IdList"][0]
+        print(f"Found gene ID: {gene_id}")
+        
+        print(f"Linking gene ID to nucleotide database")
+        handle = Entrez.elink(dbfrom="gene", db="nucleotide", id=gene_id)
+        record = Entrez.read(handle)
+        print(f"Link results: {record}")
+        if not record[0]["LinkSetDb"]:
+            print(f"No links found for gene ID: {gene_id}")
+            return None
+        sequence_id = record[0]["LinkSetDb"][0]["Link"][0]["Id"]
+        print(f"Found sequence ID: {sequence_id}")
+        return sequence_id
+    except Exception as e:
+        error_message = f"Error processing query: {str(e)}\n"
+        error_message += traceback.format_exc()
+        print(error_message)
+        return None
+
 def get_gene_id(sequence_id):
     try:
         handle = Entrez.elink(dbfrom="nuccore", db="gene", id=sequence_id)
