@@ -56,7 +56,8 @@ def fetch_sequence():
             sequence_data = {
                 'id': record.id,
                 'description': record.description,
-                'sequence': str(record.seq)
+                'sequence': str(record.seq),
+                'ncbi_link': f"https://www.ncbi.nlm.nih.gov/nuccore/{sequence_id}"
             }
             results.append(sequence_data)
         except Exception as e:

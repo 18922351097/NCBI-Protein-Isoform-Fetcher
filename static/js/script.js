@@ -55,7 +55,12 @@ document.addEventListener('DOMContentLoaded', function() {
         sequences.forEach((sequence, index) => {
             const sequenceElement = document.createElement('pre');
             sequenceElement.className = 'bg-dark text-light p-3 rounded mb-3';
-            sequenceElement.textContent = `ID: ${sequence.id}\nDescription: ${sequence.description}\n\nSequence:\n${sequence.sequence}`;
+            sequenceElement.innerHTML = `ID: ${sequence.id}
+Description: ${sequence.description}
+NCBI Link: <a href="${sequence.ncbi_link}" target="_blank" class="text-info">${sequence.ncbi_link}</a>
+
+Sequence:
+${sequence.sequence}`;
             sequenceDataDiv.appendChild(sequenceElement);
         });
 
