@@ -68,12 +68,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="tab-content" id="sequenceTabContent-${index}">
                     <div class="tab-pane fade show active" id="dna-${index}" role="tabpanel">
                         <pre class="bg-dark text-light p-3 rounded mt-2">${sequence.dna_sequence}</pre>
+                        <button class="btn btn-secondary mt-2" onclick="downloadSequence('DNA', '${sequence.dna_sequence}', '${sequence.id}_dna.txt')">Download DNA Sequence</button>
                     </div>
                     <div class="tab-pane fade" id="rna-${index}" role="tabpanel">
                         <pre class="bg-dark text-light p-3 rounded mt-2">${sequence.rna_sequence}</pre>
+                        <button class="btn btn-secondary mt-2" onclick="downloadSequence('RNA', '${sequence.rna_sequence}', '${sequence.id}_rna.txt')">Download RNA Sequence</button>
                     </div>
                     <div class="tab-pane fade" id="protein-${index}" role="tabpanel">
                         <pre class="bg-dark text-light p-3 rounded mt-2">${sequence.protein_sequence}</pre>
+                        <button class="btn btn-secondary mt-2" onclick="downloadSequence('Protein', '${sequence.protein_sequence}', '${sequence.id}_protein.txt')">Download Protein Sequence</button>
                     </div>
                 </div>
             `;
