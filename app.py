@@ -43,20 +43,28 @@ def fetch_sequence():
     
     for query in queries:
         try:
-            # Check if the query is a gene name
             sequence_id = get_sequence_id(query)
             if sequence_id is None:
-                # If not a gene name, use the query as a sequence ID
                 sequence_id = query
             
-            # Fetch the sequence from NCBI
-            handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta", retmode="text")
-            record = SeqIO.read(handle, "fasta")
+            # Fetch DNA sequence
+            dna_handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta", retmode="text")
+            dna_record = SeqIO.read(dna_handle, "fasta")
+            
+            # Fetch RNA sequence
+            rna_handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta_cds_na", retmode="text")
+            rna_record = SeqIO.read(rna_handle, "fasta")
+            
+            # Fetch protein sequence
+            protein_handle = Entrez.efetch(db="protein", id=sequence_id, rettype="fasta", retmode="text")
+            protein_record = SeqIO.read(protein_handle, "fasta")
             
             sequence_data = {
-                'id': record.id,
-                'description': record.description,
-                'sequence': str(record.seq),
+                'id': dna_record.id,
+                'description': dna_record.description,
+                'dna_sequence': str(dna_record.seq),
+                'rna_sequence': str(rna_record.seq),
+                'protein_sequence': str(protein_record.seq),
                 'ncbi_link': f"https://www.ncbi.nlm.nih.gov/nuccore/{sequence_id}"
             }
             results.append(sequence_data)
