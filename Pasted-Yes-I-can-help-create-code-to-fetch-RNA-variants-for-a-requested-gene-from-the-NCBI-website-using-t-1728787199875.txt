@@ -1,0 +1,43 @@
+Yes, I can help create code to fetch RNA variants for a requested gene from the NCBI website using the Biopython library and Entrez utilities. Below is a Python function that demonstrates how to achieve this. It uses the functionalities found in fetch_rna_variants from your codebase. You can view its full definition in app.py.
+
+from Bio import Entrez, SeqIO
+import traceback
+def fetch_rna_variants(gene_id):
+    Entrez.email = "your-email@example.com"  # Provide your email address to NCBI
+    variants = []
+    try:
+        print(f"Fetching RNA variants for gene ID: {gene_id}")
+        # Search for RNA sequences related to the gene
+        handle = Entrez.esearch(db="nucleotide", term=f"{gene_id}[Gene ID] AND refseq_rna[Filter]", retmax=100)
+        record = Entrez.read(handle)
+        rna_ids = record["IdList"]
+        print(f"Found {len(rna_ids)} RNA IDs")
+        # Fetch sequences for all RNA variants
+        for rna_id in rna_ids:
+            try:
+                handle = Entrez.efetch(db="nucleotide", id=rna_id, rettype="fasta", retmode="text")
+                record = SeqIO.read(handle, "fasta")
+                variants.append({
+                    'id': record.id,
+                    'description': record.description,
+                    'sequence': str(record.seq)
+                })
+                print(f"Fetched RNA variant: {record.id}")
+            except Exception as e:
+                print(f"Error fetching RNA variant {rna_id}: {str(e)}")
+                print(traceback.format_exc())
+        # Sort variants by sequence length, longest first
+        variants.sort(key=lambda x: len(x['sequence']), reverse=True)
+        # Label the longest sequence as "Full-length"
+        if variants:
+            variants[0]['label'] = "Full-length"
+            for variant in variants[1:]:
+                variant['label'] = "Variant"
+    except Exception as e:
+        print(f"Error fetching RNA variants: {str(e)}")
+        print(traceback.format_exc())
+    print(f"Total RNA variants fetched: {len(variants)}")
+    return variants
+# Example usage:
+# variants = fetch_rna_variants("your_gene_id")
+To use this function, replace "your-email@example.com" with your actual email address to comply with NCBI's Entrez requirements, and pass the desired gene_id to the function. This script will search for RNA sequences related to the specified gene ID and fetch those variants from the NCBI nucleotide database.

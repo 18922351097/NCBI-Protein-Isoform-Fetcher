@@ -9,7 +9,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
 
 # Set your email for NCBI
-Entrez.email = "your_email@example.com"
+Entrez.email = "leomusk900@gmail.com"
 
 @app.route('/')
 def index():

@@ -1,0 +1,43 @@
+Certainly! Below is a Python function that fetches all protein variants for a requested gene from the NCBI website using the Biopython library. This code is based on the functionality available in the fetch_protein_variants function found in your project in app.py.
+
+from Bio import Entrez, SeqIO
+import traceback
+def fetch_protein_variants(gene_id):
+    Entrez.email = "your-email@example.com"  # Provide your email address for NCBI
+    variants = []
+    try:
+        print(f"Fetching protein variants for gene ID: {gene_id}")
+        # Search for protein sequences related to the gene
+        handle = Entrez.esearch(db="protein", term=f"{gene_id}[Gene ID]", retmax=100)
+        record = Entrez.read(handle)
+        protein_ids = record["IdList"]
+        print(f"Found {len(protein_ids)} protein IDs")
+        # Fetch sequences for all protein variants
+        for protein_id in protein_ids:
+            try:
+                handle = Entrez.efetch(db="protein", id=protein_id, rettype="fasta", retmode="text")
+                record = SeqIO.read(handle, "fasta")
+                variants.append({
+                    'id': record.id,
+                    'description': record.description,
+                    'sequence': str(record.seq)
+                })
+                print(f"Fetched protein variant: {record.id}")
+            except Exception as e:
+                print(f"Error fetching protein variant {protein_id}: {str(e)}")
+                print(traceback.format_exc())
+        # Sort variants by sequence length, longest first
+        variants.sort(key=lambda x: len(x['sequence']), reverse=True)
+        # Label the longest sequence as "Full-length"
+        if variants:
+            variants[0]['label'] = "Full-length"
+            for variant in variants[1:]:
+                variant['label'] = "Variant"
+    except Exception as e:
+        print(f"Error fetching protein variants: {str(e)}")
+        print(traceback.format_exc())
+    print(f"Total protein variants fetched: {len(variants)}")
+    return variants
+# Example usage:
+# variants = fetch_protein_variants("your_gene_id")
+To use this function, ensure that "your-email@example.com" is replaced with your actual email address, which is required by NCBI for Entrez queries. You can call fetch_protein_variants() with the desired gene_id to retrieve protein sequences related to that gene.
