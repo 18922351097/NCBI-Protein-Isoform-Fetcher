@@ -75,7 +75,9 @@ def fetch_protein_variants(gene_id):
             variants.append({
                 'id': record.id,
                 'description': record.description,
-                'sequence': str(record.seq)
+                'sequence': str(record.seq),
+                'size': len(record.seq),
+                'ncbi_link': f"https://www.ncbi.nlm.nih.gov/protein/{record.id}"
             })
             print(f"Fetched protein isoform: {record.id}")
 

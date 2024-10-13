@@ -82,6 +82,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div id="protein-isoform-${sequenceIndex}-${index}" class="protein-isoform mb-4">
                     <h5>${variant.label}: ${variant.id}</h5>
                     <p>Description: ${variant.description}</p>
+                    <p>Size: ${variant.size} aa</p>
+                    <p>NCBI Link: <a href="${variant.ncbi_link}" target="_blank" class="text-info">${variant.ncbi_link}</a></p>
                     <pre class="bg-dark text-light p-3 rounded mt-2">${variant.sequence}</pre>
                     <button class="btn btn-secondary mt-2" onclick="downloadSequence('${variant.sequence}', '${variant.id}_protein.txt')">Download Protein Sequence</button>
                 </div>
