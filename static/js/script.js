@@ -75,17 +75,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        let isoformHtml = `
-            <select class="form-select mb-2" id="protein-isoform-select-${sequenceIndex}" onchange="showSelectedProteinIsoform(${sequenceIndex})">
-                ${variants.map((variant, index) => `
-                    <option value="${index}">${variant.label}: ${variant.id}</option>
-                `).join('')}
-            </select>
-        `;
+        let isoformHtml = '';
 
         variants.forEach((variant, index) => {
             isoformHtml += `
-                <div id="protein-isoform-${sequenceIndex}-${index}" class="protein-isoform ${index === 0 ? '' : 'd-none'}">
+                <div id="protein-isoform-${sequenceIndex}-${index}" class="protein-isoform mb-4">
                     <h5>${variant.label}: ${variant.id}</h5>
                     <p>Description: ${variant.description}</p>
                     <pre class="bg-dark text-light p-3 rounded mt-2">${variant.sequence}</pre>
@@ -129,15 +123,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function showSelectedProteinIsoform(sequenceIndex) {
-    const select = document.getElementById(`protein-isoform-select-${sequenceIndex}`);
-    const selectedIndex = select.value;
-    const isoforms = document.querySelectorAll(`#proteinIsoforms-${sequenceIndex} .protein-isoform`);
-    isoforms.forEach((isoform, index) => {
-        if (index.toString() === selectedIndex) {
-            isoform.classList.remove('d-none');
-        } else {
-            isoform.classList.add('d-none');
-        }
-    });
+function downloadSequence(sequenceData, fileName) {
+    const blob = new Blob([sequenceData], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
 }
