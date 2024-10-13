@@ -8,9 +8,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     form.addEventListener('submit', function(e) {
         e.preventDefault();
-        const sequenceIds = document.getElementById('sequenceIds').value.trim();
-        if (validateInput(sequenceIds)) {
-            fetchSequences(sequenceIds);
+        const queries = document.getElementById('queries').value.trim();
+        if (validateInput(queries)) {
+            fetchSequences(queries);
         }
     });
 
@@ -20,20 +20,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateInput(input) {
         if (input === '') {
-            displayError('Please enter at least one sequence ID.');
+            displayError('Please enter at least one sequence ID or gene name.');
             return false;
         }
         return true;
     }
 
-    function fetchSequences(sequenceIds) {
+    function fetchSequences(queries) {
         showLoading(true);
         fetch('/fetch_sequence', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
-            body: `sequence_ids=${encodeURIComponent(sequenceIds)}`
+            body: `queries=${encodeURIComponent(queries)}`
         })
         .then(response => response.json())
         .then(data => {

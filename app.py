@@ -13,19 +13,42 @@ Entrez.email = "your_email@example.com"
 def index():
     return render_template('index.html')
 
+def get_sequence_id(query):
+    try:
+        handle = Entrez.esearch(db="gene", term=query + "[Gene Name]", retmax=1)
+        record = Entrez.read(handle)
+        if record["Count"] == "0":
+            return None
+        gene_id = record["IdList"][0]
+        
+        handle = Entrez.elink(dbfrom="gene", db="nucleotide", id=gene_id)
+        record = Entrez.read(handle)
+        if not record[0]["LinkSetDb"]:
+            return None
+        return record[0]["LinkSetDb"][0]["Link"][0]["Id"]
+    except Exception as e:
+        print(f"Error searching for gene: {str(e)}")
+        return None
+
 @app.route('/fetch_sequence', methods=['POST'])
 def fetch_sequence():
-    sequence_ids = request.form.get('sequence_ids', '').split(',')
-    sequence_ids = [seq_id.strip() for seq_id in sequence_ids if seq_id.strip()]
+    queries = request.form.get('queries', '').split(',')
+    queries = [query.strip() for query in queries if query.strip()]
     
-    if not sequence_ids:
-        return jsonify(success=False, error="Please enter at least one valid sequence ID.")
+    if not queries:
+        return jsonify(success=False, error="Please enter at least one valid sequence ID or gene name.")
     
     results = []
     errors = []
     
-    for sequence_id in sequence_ids:
+    for query in queries:
         try:
+            # Check if the query is a gene name
+            sequence_id = get_sequence_id(query)
+            if sequence_id is None:
+                # If not a gene name, use the query as a sequence ID
+                sequence_id = query
+            
             # Fetch the sequence from NCBI
             handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta", retmode="text")
             record = SeqIO.read(handle, "fasta")
@@ -37,12 +60,12 @@ def fetch_sequence():
             }
             results.append(sequence_data)
         except Exception as e:
-            errors.append(f"Error fetching sequence {sequence_id}: {str(e)}")
+            errors.append(f"Error fetching sequence for {query}: {str(e)}")
     
     if results:
         return jsonify(success=True, data=results, errors=errors)
     else:
-        return jsonify(success=False, error="Unable to fetch any sequences. Please check the IDs and try again.", errors=errors)
+        return jsonify(success=False, error="Unable to fetch any sequences. Please check the IDs or gene names and try again.", errors=errors)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
