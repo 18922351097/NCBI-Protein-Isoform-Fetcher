@@ -2,6 +2,7 @@ import os
 import traceback
 from flask import Flask, render_template, request, jsonify
 from Bio import Entrez, SeqIO
+from Bio.Seq import Seq
 from io import StringIO
 
 app = Flask(__name__)
@@ -85,6 +86,8 @@ def fetch_sequence():
             
             # Fetch protein sequence
             print("Fetching protein sequence")
+            protein_sequence = ""
+            protein_fetch_error = ""
             try:
                 # Find protein ID linked to the nucleotide sequence
                 protein_link_handle = Entrez.elink(dbfrom="nuccore", db="protein", id=sequence_id)
@@ -98,11 +101,19 @@ def fetch_sequence():
                     protein_record = SeqIO.read(protein_handle, "fasta")
                     protein_sequence = str(protein_record.seq)
                 else:
-                    print("No linked protein found")
-                    protein_sequence = "No linked protein sequence found"
+                    raise ValueError("No linked protein found")
             except Exception as e:
-                print(f"Error fetching protein sequence: {str(e)}")
-                protein_sequence = "Unable to fetch protein sequence"
+                protein_fetch_error = f"Error fetching protein sequence: {str(e)}"
+                print(protein_fetch_error)
+                
+                # Fallback: Translate DNA to protein
+                print("Attempting to translate DNA to protein")
+                try:
+                    coding_dna = Seq(str(dna_record.seq))
+                    protein_sequence = str(coding_dna.translate())
+                except Exception as translate_error:
+                    print(f"Error translating DNA to protein: {str(translate_error)}")
+                    protein_sequence = "Unable to fetch or translate protein sequence"
             
             sequence_data = {
                 'id': dna_record.id,
@@ -110,6 +121,7 @@ def fetch_sequence():
                 'dna_sequence': str(dna_record.seq),
                 'rna_sequence': rna_sequence,
                 'protein_sequence': protein_sequence,
+                'protein_fetch_error': protein_fetch_error,
                 'ncbi_link': f"https://www.ncbi.nlm.nih.gov/nuccore/{sequence_id}"
             }
             results.append(sequence_data)

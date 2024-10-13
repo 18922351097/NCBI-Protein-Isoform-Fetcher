@@ -1,0 +1,36 @@
+Yes, the workspace contains a code snippet that fetches protein sequences from the NCBI website using the Biopython package. Let's break down the relevant parts from the app.py:
+
+Import Necessary Libraries:
+
+The code imports libraries such as Entrez and SeqIO from BioPython, used to interact with NCBI's services to fetch biological data.
+Setting Up Entrez:
+
+You must specify an email address for NCBI service through Entrez.email to comply with their usage policies.
+Fetch Protein Sequence:
+
+The code links a nucleotide sequence to its corresponding protein using Entrez.elink and fetches the protein sequence using Entrez.efetch. The protein sequence is then read into a record format using SeqIO.
+Here's the relevant part of the code to fetch the protein sequence:
+
+from Bio import Entrez, SeqIO
+def fetch_protein_sequence(sequence_id):
+    Entrez.email = "your_email@example.com"  # Set your email address here
+    try:
+        # Find protein ID linked to the nucleotide sequence
+        protein_link_handle = Entrez.elink(dbfrom="nuccore", db="protein", id=sequence_id)
+        protein_link_record = Entrez.read(protein_link_handle)
+        if protein_link_record[0]["LinkSetDb"]:
+            protein_id = protein_link_record[0]["LinkSetDb"][0]["Link"][0]["Id"]
+            print(f"Found protein ID: {protein_id}")
+            
+            # Fetch protein sequence using the protein ID
+            protein_handle = Entrez.efetch(db="protein", id=protein_id, rettype="fasta", retmode="text")
+            protein_record = SeqIO.read(protein_handle, "fasta")
+            protein_sequence = str(protein_record.seq)
+        else:
+            print("No linked protein found")
+            protein_sequence = "No linked protein sequence found"
+    except Exception as e:
+        print(f"Error fetching protein sequence: {str(e)}")
+        protein_sequence = "Unable to fetch protein sequence"
+    return protein_sequence
+Make sure to replace "your_email@example.com" with your actual email address before using the code.
