@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateInput(input) {
         if (input === '') {
-            displayError('Please enter at least one protein ID or gene name.');
+            displayError('Please enter at least one gene name.');
             return false;
         }
         return true;
@@ -51,13 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const sequenceElement = document.createElement('div');
             sequenceElement.className = 'mb-4';
             sequenceElement.innerHTML = `
-                <h4>ID: ${sequence.id}</h4>
+                <h4>Gene: ${sequence.gene_name} (ID: ${sequence.gene_id})</h4>
                 <p>NCBI Link: <a href="${sequence.ncbi_link}" target="_blank" class="text-info">${sequence.ncbi_link}</a></p>
-                <div id="proteinVariants-${index}"></div>
+                <div id="proteinIsoforms-${index}"></div>
             `;
             sequenceDataDiv.appendChild(sequenceElement);
 
-            displayProteinVariants(sequence.protein_variants, index);
+            displayProteinIsoforms(sequence.protein_variants, index);
         });
 
         if (errors && errors.length > 0) {
@@ -68,15 +68,15 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.classList.add('d-none');
     }
 
-    function displayProteinVariants(variants, sequenceIndex) {
-        const variantsContainer = document.getElementById(`proteinVariants-${sequenceIndex}`);
+    function displayProteinIsoforms(variants, sequenceIndex) {
+        const isoformsContainer = document.getElementById(`proteinIsoforms-${sequenceIndex}`);
         if (!variants || variants.length === 0) {
-            variantsContainer.innerHTML = '<p>No protein variants found.</p>';
+            isoformsContainer.innerHTML = '<p>No protein isoforms found.</p>';
             return;
         }
 
-        let variantHtml = `
-            <select class="form-select mb-2" id="protein-variant-select-${sequenceIndex}" onchange="showSelectedProteinVariant(${sequenceIndex})">
+        let isoformHtml = `
+            <select class="form-select mb-2" id="protein-isoform-select-${sequenceIndex}" onchange="showSelectedProteinIsoform(${sequenceIndex})">
                 ${variants.map((variant, index) => `
                     <option value="${index}">${variant.label}: ${variant.id}</option>
                 `).join('')}
@@ -84,8 +84,8 @@ document.addEventListener('DOMContentLoaded', function() {
         `;
 
         variants.forEach((variant, index) => {
-            variantHtml += `
-                <div id="protein-variant-${sequenceIndex}-${index}" class="protein-variant ${index === 0 ? '' : 'd-none'}">
+            isoformHtml += `
+                <div id="protein-isoform-${sequenceIndex}-${index}" class="protein-isoform ${index === 0 ? '' : 'd-none'}">
                     <h5>${variant.label}: ${variant.id}</h5>
                     <p>Description: ${variant.description}</p>
                     <pre class="bg-dark text-light p-3 rounded mt-2">${variant.sequence}</pre>
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         });
 
-        variantsContainer.innerHTML = variantHtml;
+        isoformsContainer.innerHTML = isoformHtml;
     }
 
     function displayError(message, errors = []) {
@@ -129,15 +129,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function showSelectedProteinVariant(sequenceIndex) {
-    const select = document.getElementById(`protein-variant-select-${sequenceIndex}`);
+function showSelectedProteinIsoform(sequenceIndex) {
+    const select = document.getElementById(`protein-isoform-select-${sequenceIndex}`);
     const selectedIndex = select.value;
-    const variants = document.querySelectorAll(`#proteinVariants-${sequenceIndex} .protein-variant`);
-    variants.forEach((variant, index) => {
+    const isoforms = document.querySelectorAll(`#proteinIsoforms-${sequenceIndex} .protein-isoform`);
+    isoforms.forEach((isoform, index) => {
         if (index.toString() === selectedIndex) {
-            variant.classList.remove('d-none');
+            isoform.classList.remove('d-none');
         } else {
-            variant.classList.add('d-none');
+            isoform.classList.add('d-none');
         }
     });
 }
