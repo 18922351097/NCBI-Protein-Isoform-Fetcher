@@ -13,9 +13,19 @@ Entrez.email = "leomusk900@gmail.com"
 
 @app.route('/')
 def index():
+    """Render the main page of the application."""
     return render_template('index.html')
 
 def get_sequence_id(query):
+    """
+    Get the sequence ID for a given query (gene name or sequence ID).
+    
+    Args:
+        query (str): The gene name or sequence ID to search for.
+    
+    Returns:
+        str or None: The sequence ID if found, None otherwise.
+    """
     try:
         print(f"Processing query: {query}")
         # Check if the query is likely a sequence ID (e.g., starts with NM_, NR_, etc.)
@@ -50,6 +60,15 @@ def get_sequence_id(query):
         return None
 
 def get_gene_id(sequence_id):
+    """
+    Get the gene ID for a given sequence ID.
+    
+    Args:
+        sequence_id (str): The sequence ID to search for.
+    
+    Returns:
+        str or None: The gene ID if found, None otherwise.
+    """
     try:
         handle = Entrez.elink(dbfrom="nuccore", db="gene", id=sequence_id)
         record = Entrez.read(handle)
@@ -69,16 +88,23 @@ def get_gene_id(sequence_id):
     return None
 
 def fetch_protein_variants(gene_id):
+    """
+    Fetch protein variants for a given gene ID.
+    
+    Args:
+        gene_id (str): The gene ID to fetch protein variants for.
+    
+    Returns:
+        list: A list of dictionaries containing protein variant information.
+    """
     variants = []
     try:
         print(f"Fetching protein variants for gene ID: {gene_id}")
-        # Search for protein sequences related to the gene
         handle = Entrez.esearch(db="protein", term=f"{gene_id}[Gene ID]", retmax=100)
         record = Entrez.read(handle)
         protein_ids = record["IdList"]
         print(f"Found {len(protein_ids)} protein IDs")
 
-        # Fetch sequences for all protein variants
         for protein_id in protein_ids:
             try:
                 handle = Entrez.efetch(db="protein", id=protein_id, rettype="fasta", retmode="text")
@@ -93,10 +119,8 @@ def fetch_protein_variants(gene_id):
                 print(f"Error fetching protein variant {protein_id}: {str(e)}")
                 print(traceback.format_exc())
 
-        # Sort variants by sequence length, longest first
         variants.sort(key=lambda x: len(x['sequence']), reverse=True)
 
-        # Label the longest sequence as "Full-length"
         if variants:
             variants[0]['label'] = "Full-length"
             for variant in variants[1:]:
@@ -110,16 +134,23 @@ def fetch_protein_variants(gene_id):
     return variants
 
 def fetch_rna_variants(gene_id):
+    """
+    Fetch RNA variants for a given gene ID.
+    
+    Args:
+        gene_id (str): The gene ID to fetch RNA variants for.
+    
+    Returns:
+        list: A list of dictionaries containing RNA variant information.
+    """
     variants = []
     try:
         print(f"Fetching RNA variants for gene ID: {gene_id}")
-        # Search for RNA sequences related to the gene
         handle = Entrez.esearch(db="nucleotide", term=f"{gene_id}[Gene ID] AND refseq_rna[Filter]", retmax=100)
         record = Entrez.read(handle)
         rna_ids = record["IdList"]
         print(f"Found {len(rna_ids)} RNA IDs")
 
-        # Fetch sequences for all RNA variants
         for rna_id in rna_ids:
             try:
                 handle = Entrez.efetch(db="nucleotide", id=rna_id, rettype="fasta", retmode="text")
@@ -134,10 +165,8 @@ def fetch_rna_variants(gene_id):
                 print(f"Error fetching RNA variant {rna_id}: {str(e)}")
                 print(traceback.format_exc())
 
-        # Sort variants by sequence length, longest first
         variants.sort(key=lambda x: len(x['sequence']), reverse=True)
 
-        # Label the longest sequence as "Full-length"
         if variants:
             variants[0]['label'] = "Full-length"
             for variant in variants[1:]:
@@ -152,6 +181,12 @@ def fetch_rna_variants(gene_id):
 
 @app.route('/fetch_sequence', methods=['POST'])
 def fetch_sequence():
+    """
+    Fetch sequence information for given queries.
+    
+    Returns:
+        json: A JSON response containing the fetched sequence data or error information.
+    """
     queries = request.form.get('queries', '').split(',')
     queries = [query.strip() for query in queries if query.strip()]
     
@@ -169,12 +204,10 @@ def fetch_sequence():
                 raise ValueError(f"Unable to find sequence ID for query: {query}")
             print(f"Using sequence ID: {sequence_id}")
             
-            # Fetch DNA sequence
             print("Fetching DNA sequence")
             dna_handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta", retmode="text")
             dna_record = SeqIO.read(dna_handle, "fasta")
             
-            # Fetch RNA and protein variants
             print("Fetching RNA and protein variants")
             gene_id = get_gene_id(sequence_id)
             if gene_id:
@@ -209,6 +242,12 @@ def fetch_sequence():
 
 @app.route('/debug_info')
 def debug_info():
+    """
+    Provide debug information about the application.
+    
+    Returns:
+        json: A JSON response containing debug information.
+    """
     return jsonify({
         'entrez_email': Entrez.email,
         'api_key': os.environ.get('NCBI_API_KEY', 'Not set')
