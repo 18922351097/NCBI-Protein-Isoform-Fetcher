@@ -71,8 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn btn-secondary mt-2" onclick="downloadSequence('DNA', '${sequence.dna_sequence}', '${sequence.id}_dna.txt')">Download DNA Sequence</button>
                     </div>
                     <div class="tab-pane fade" id="rna-${index}" role="tabpanel">
-                        <pre class="bg-dark text-light p-3 rounded mt-2">${sequence.rna_sequence}</pre>
-                        <button class="btn btn-secondary mt-2" onclick="downloadSequence('RNA', '${sequence.rna_sequence}', '${sequence.id}_rna.txt')">Download RNA Sequence</button>
+                        ${displayRNAVariants(sequence.rna_variants, index)}
                     </div>
                     <div class="tab-pane fade" id="protein-${index}" role="tabpanel">
                         ${displayProteinVariants(sequence.protein_variants, index)}
@@ -90,13 +89,40 @@ document.addEventListener('DOMContentLoaded', function() {
         errorDiv.classList.add('d-none');
     }
 
+    function displayRNAVariants(variants, sequenceIndex) {
+        if (!variants || variants.length === 0) {
+            return '<p>No RNA variants found.</p>';
+        }
+
+        let variantHtml = `
+            <select class="form-select mb-2" id="rna-variant-select-${sequenceIndex}" onchange="showSelectedRNAVariant(${sequenceIndex})">
+                ${variants.map((variant, index) => `
+                    <option value="${index}">${variant.label}: ${variant.id}</option>
+                `).join('')}
+            </select>
+        `;
+
+        variants.forEach((variant, index) => {
+            variantHtml += `
+                <div id="rna-variant-${sequenceIndex}-${index}" class="rna-variant ${index === 0 ? '' : 'd-none'}">
+                    <h5>${variant.label}: ${variant.id}</h5>
+                    <p>Description: ${variant.description}</p>
+                    <pre class="bg-dark text-light p-3 rounded mt-2">${variant.sequence}</pre>
+                    <button class="btn btn-secondary mt-2" onclick="downloadSequence('RNA', '${variant.sequence}', '${variant.id}_rna.txt')">Download RNA Sequence</button>
+                </div>
+            `;
+        });
+
+        return variantHtml;
+    }
+
     function displayProteinVariants(variants, sequenceIndex) {
         if (!variants || variants.length === 0) {
             return '<p>No protein variants found.</p>';
         }
 
         let variantHtml = `
-            <select class="form-select mb-2" id="protein-variant-select-${sequenceIndex}" onchange="showSelectedVariant(${sequenceIndex})">
+            <select class="form-select mb-2" id="protein-variant-select-${sequenceIndex}" onchange="showSelectedProteinVariant(${sequenceIndex})">
                 ${variants.map((variant, index) => `
                     <option value="${index}">${variant.label}: ${variant.id}</option>
                 `).join('')}
@@ -149,7 +175,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function showSelectedVariant(sequenceIndex) {
+function showSelectedRNAVariant(sequenceIndex) {
+    const select = document.getElementById(`rna-variant-select-${sequenceIndex}`);
+    const selectedIndex = select.value;
+    const variants = document.querySelectorAll(`#rna-${sequenceIndex} .rna-variant`);
+    variants.forEach((variant, index) => {
+        if (index.toString() === selectedIndex) {
+            variant.classList.remove('d-none');
+        } else {
+            variant.classList.add('d-none');
+        }
+    });
+}
+
+function showSelectedProteinVariant(sequenceIndex) {
     const select = document.getElementById(`protein-variant-select-${sequenceIndex}`);
     const selectedIndex = select.value;
     const variants = document.querySelectorAll(`#protein-${sequenceIndex} .protein-variant`);

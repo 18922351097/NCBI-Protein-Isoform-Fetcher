@@ -92,6 +92,38 @@ def fetch_protein_variants(gene_id):
 
     return variants
 
+def fetch_rna_variants(gene_id):
+    variants = []
+    try:
+        # Search for RNA sequences related to the gene
+        handle = Entrez.esearch(db="nucleotide", term=f"{gene_id}[Gene ID] AND refseq_rna[Filter]", retmax=100)
+        record = Entrez.read(handle)
+        rna_ids = record["IdList"]
+
+        # Fetch sequences for all RNA variants
+        for rna_id in rna_ids:
+            handle = Entrez.efetch(db="nucleotide", id=rna_id, rettype="fasta", retmode="text")
+            record = SeqIO.read(handle, "fasta")
+            variants.append({
+                'id': record.id,
+                'description': record.description,
+                'sequence': str(record.seq)
+            })
+
+        # Sort variants by sequence length, longest first
+        variants.sort(key=lambda x: len(x['sequence']), reverse=True)
+
+        # Label the longest sequence as "Full-length"
+        if variants:
+            variants[0]['label'] = "Full-length"
+            for variant in variants[1:]:
+                variant['label'] = "Variant"
+
+    except Exception as e:
+        print(f"Error fetching RNA variants: {str(e)}")
+
+    return variants
+
 @app.route('/fetch_sequence', methods=['POST'])
 def fetch_sequence():
     queries = request.form.get('queries', '').split(',')
@@ -116,31 +148,22 @@ def fetch_sequence():
             dna_handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta", retmode="text")
             dna_record = SeqIO.read(dna_handle, "fasta")
             
-            # Fetch RNA sequence
-            print("Fetching RNA sequence")
-            try:
-                rna_handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta_cds_na", retmode="text")
-                rna_record = SeqIO.read(rna_handle, "fasta")
-                rna_sequence = str(rna_record.seq)
-            except Exception as e:
-                print(f"Error fetching RNA sequence: {str(e)}")
-                print("RNA sequence not found, transcribing DNA to RNA")
-                rna_sequence = str(dna_record.seq.transcribe())
-            
-            # Fetch protein variants
-            print("Fetching protein variants")
+            # Fetch RNA and protein variants
+            print("Fetching RNA and protein variants")
             gene_id = get_gene_id(sequence_id)
             if gene_id:
+                rna_variants = fetch_rna_variants(gene_id)
                 protein_variants = fetch_protein_variants(gene_id)
             else:
+                rna_variants = []
                 protein_variants = []
-                print("Unable to find gene ID, protein variants not fetched")
+                print("Unable to find gene ID, RNA and protein variants not fetched")
             
             sequence_data = {
                 'id': dna_record.id,
                 'description': dna_record.description,
                 'dna_sequence': str(dna_record.seq),
-                'rna_sequence': rna_sequence,
+                'rna_variants': rna_variants,
                 'protein_variants': protein_variants,
                 'ncbi_link': f"https://www.ncbi.nlm.nih.gov/nuccore/{sequence_id}"
             }
