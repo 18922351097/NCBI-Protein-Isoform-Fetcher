@@ -86,9 +86,20 @@ def fetch_sequence():
             # Fetch protein sequence
             print("Fetching protein sequence")
             try:
-                protein_handle = Entrez.efetch(db="protein", id=sequence_id, rettype="fasta", retmode="text")
-                protein_record = SeqIO.read(protein_handle, "fasta")
-                protein_sequence = str(protein_record.seq)
+                # Find protein ID linked to the nucleotide sequence
+                protein_link_handle = Entrez.elink(dbfrom="nuccore", db="protein", id=sequence_id)
+                protein_link_record = Entrez.read(protein_link_handle)
+                if protein_link_record[0]["LinkSetDb"]:
+                    protein_id = protein_link_record[0]["LinkSetDb"][0]["Link"][0]["Id"]
+                    print(f"Found protein ID: {protein_id}")
+                    
+                    # Fetch protein sequence using the protein ID
+                    protein_handle = Entrez.efetch(db="protein", id=protein_id, rettype="fasta", retmode="text")
+                    protein_record = SeqIO.read(protein_handle, "fasta")
+                    protein_sequence = str(protein_record.seq)
+                else:
+                    print("No linked protein found")
+                    protein_sequence = "No linked protein sequence found"
             except Exception as e:
                 print(f"Error fetching protein sequence: {str(e)}")
                 protein_sequence = "Unable to fetch protein sequence"
