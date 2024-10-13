@@ -16,6 +16,12 @@ def index():
 
 def get_sequence_id(query):
     try:
+        print(f"Processing query: {query}")
+        # Check if the query is likely a sequence ID (e.g., starts with NM_, NR_, etc.)
+        if any(query.startswith(prefix) for prefix in ['NM_', 'NR_', 'XM_', 'XR_', 'NG_']):
+            print(f"Query appears to be a sequence ID: {query}")
+            return query
+
         print(f"Searching for gene: {query}")
         handle = Entrez.esearch(db="gene", term=query + "[Gene Name]", retmax=1)
         record = Entrez.read(handle)
@@ -37,7 +43,7 @@ def get_sequence_id(query):
         print(f"Found sequence ID: {sequence_id}")
         return sequence_id
     except Exception as e:
-        error_message = f"Error searching for gene: {str(e)}\n"
+        error_message = f"Error processing query: {str(e)}\n"
         error_message += traceback.format_exc()
         print(error_message)
         return None
@@ -58,7 +64,7 @@ def fetch_sequence():
             print(f"Processing query: {query}")
             sequence_id = get_sequence_id(query)
             if sequence_id is None:
-                sequence_id = query
+                raise ValueError(f"Unable to find sequence ID for query: {query}")
             print(f"Using sequence ID: {sequence_id}")
             
             # Fetch DNA sequence
@@ -68,20 +74,31 @@ def fetch_sequence():
             
             # Fetch RNA sequence
             print("Fetching RNA sequence")
-            rna_handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta_cds_na", retmode="text")
-            rna_record = SeqIO.read(rna_handle, "fasta")
+            try:
+                rna_handle = Entrez.efetch(db="nucleotide", id=sequence_id, rettype="fasta_cds_na", retmode="text")
+                rna_record = SeqIO.read(rna_handle, "fasta")
+                rna_sequence = str(rna_record.seq)
+            except Exception as e:
+                print(f"Error fetching RNA sequence: {str(e)}")
+                print("RNA sequence not found, transcribing DNA to RNA")
+                rna_sequence = str(dna_record.seq.transcribe())
             
             # Fetch protein sequence
             print("Fetching protein sequence")
-            protein_handle = Entrez.efetch(db="protein", id=sequence_id, rettype="fasta", retmode="text")
-            protein_record = SeqIO.read(protein_handle, "fasta")
+            try:
+                protein_handle = Entrez.efetch(db="protein", id=sequence_id, rettype="fasta", retmode="text")
+                protein_record = SeqIO.read(protein_handle, "fasta")
+                protein_sequence = str(protein_record.seq)
+            except Exception as e:
+                print(f"Error fetching protein sequence: {str(e)}")
+                protein_sequence = "Unable to fetch protein sequence"
             
             sequence_data = {
                 'id': dna_record.id,
                 'description': dna_record.description,
                 'dna_sequence': str(dna_record.seq),
-                'rna_sequence': str(rna_record.seq),
-                'protein_sequence': str(protein_record.seq),
+                'rna_sequence': rna_sequence,
+                'protein_sequence': protein_sequence,
                 'ncbi_link': f"https://www.ncbi.nlm.nih.gov/nuccore/{sequence_id}"
             }
             results.append(sequence_data)
