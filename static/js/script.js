@@ -75,8 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <button class="btn btn-secondary mt-2" onclick="downloadSequence('RNA', '${sequence.rna_sequence}', '${sequence.id}_rna.txt')">Download RNA Sequence</button>
                     </div>
                     <div class="tab-pane fade" id="protein-${index}" role="tabpanel">
-                        <pre class="bg-dark text-light p-3 rounded mt-2">${sequence.protein_sequence}</pre>
-                        <button class="btn btn-secondary mt-2" onclick="downloadSequence('Protein', '${sequence.protein_sequence}', '${sequence.id}_protein.txt')">Download Protein Sequence</button>
+                        ${displayProteinVariants(sequence.protein_variants, index)}
                     </div>
                 </div>
             `;
@@ -89,6 +88,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
         resultDiv.classList.remove('d-none');
         errorDiv.classList.add('d-none');
+    }
+
+    function displayProteinVariants(variants, sequenceIndex) {
+        if (!variants || variants.length === 0) {
+            return '<p>No protein variants found.</p>';
+        }
+
+        let variantHtml = `
+            <select class="form-select mb-2" id="protein-variant-select-${sequenceIndex}" onchange="showSelectedVariant(${sequenceIndex})">
+                ${variants.map((variant, index) => `
+                    <option value="${index}">${variant.label}: ${variant.id}</option>
+                `).join('')}
+            </select>
+        `;
+
+        variants.forEach((variant, index) => {
+            variantHtml += `
+                <div id="protein-variant-${sequenceIndex}-${index}" class="protein-variant ${index === 0 ? '' : 'd-none'}">
+                    <h5>${variant.label}: ${variant.id}</h5>
+                    <p>Description: ${variant.description}</p>
+                    <pre class="bg-dark text-light p-3 rounded mt-2">${variant.sequence}</pre>
+                    <button class="btn btn-secondary mt-2" onclick="downloadSequence('Protein', '${variant.sequence}', '${variant.id}_protein.txt')">Download Protein Sequence</button>
+                </div>
+            `;
+        });
+
+        return variantHtml;
     }
 
     function displayError(message, errors = []) {
@@ -122,3 +148,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 });
+
+function showSelectedVariant(sequenceIndex) {
+    const select = document.getElementById(`protein-variant-select-${sequenceIndex}`);
+    const selectedIndex = select.value;
+    const variants = document.querySelectorAll(`#protein-${sequenceIndex} .protein-variant`);
+    variants.forEach((variant, index) => {
+        if (index.toString() === selectedIndex) {
+            variant.classList.remove('d-none');
+        } else {
+            variant.classList.add('d-none');
+        }
+    });
+}
+
+function downloadSequence(sequenceType, sequenceData, fileName) {
+    const blob = new Blob([sequenceData], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
